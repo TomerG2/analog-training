@@ -16,11 +16,9 @@ Lessons use a progressive reduction approach: start with full numbers, then remo
 
 | # | Lesson | Skill |
 |---|--------|-------|
-| 2 | [Anchors with Numbers](http://localhost:8742/lessons/0002-numbered-anchors.html) | Read a clock — numbers → anchors only → blank dial |
+| 1 | [Anchors with Numbers](http://localhost:8742/lessons/0001-numbered-anchors.html) | Read a clock — numbers → anchors only → blank dial |
+| 2 | [Four Anchors](http://localhost:8742/lessons/0002-four-anchors.html) | Numberless dial drills at 5-minute precision |
 | 3 | [Set the Clock](http://localhost:8742/lessons/0003-set-the-clock.html) | See digital time, place the hands — builds spatial memory |
-| 1 | [Four Anchors](http://localhost:8742/lessons/0001-four-anchors.html) | Numberless dial drills at 5-minute precision |
-
-Recommended order: 2 → 3 → 1.
 
 ## Progress Tracking
 
