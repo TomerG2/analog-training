@@ -121,14 +121,6 @@
   .hand-btn.active-hour { background: #b45309; border-color: #f59e0b; color: white; }
   .hand-btn.active-minute { background: #1d4ed8; border-color: #60a5fa; color: white; }
 
-  .your-time {
-    font-size: 1.3rem;
-    color: var(--muted);
-    margin: 0.75rem 0;
-    font-variant-numeric: tabular-nums;
-  }
-  .your-time span { color: var(--text); font-weight: bold; }
-
   .submit-btn {
     padding: 0.75rem 2.5rem;
     border: none;
@@ -151,6 +143,13 @@
   .feedback.correct { color: var(--success); }
   .feedback.wrong { color: var(--error); }
   .feedback.close { color: var(--gold); }
+
+  .timer {
+    font-size: 1.5rem;
+    color: var(--gold);
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 1rem;
+  }
 
   .score-bar {
     display: flex;
@@ -282,7 +281,7 @@
     <canvas id="quiz-clock" class="clock" width="280" height="280"></canvas>
   </div>
 
-  <div class="your-time">Your clock: <span id="your-time">12:00</span></div>
+  <div class="timer" id="timer">0.0s</div>
 
   <button class="submit-btn" id="submit-btn" onclick="submitAnswer()">Submit</button>
 
@@ -291,7 +290,8 @@
   <div class="score-bar">
     Round: <span id="round">1</span>/10 &nbsp;&nbsp;
     Perfect: <span id="perfect-count">0</span> &nbsp;&nbsp;
-    Close: <span id="close-count">0</span>
+    Close: <span id="close-count">0</span> &nbsp;&nbsp;
+    Avg: <span id="avg-time">—</span>
   </div>
   <div id="summary" style="display:none"></div>
 </div>
@@ -347,6 +347,9 @@ let closeCount = 0;
 let results = []; // 'perfect', 'close', 'wrong'
 let isDragging = false;
 let answered = false;
+let startTime = null;
+let timerInterval = null;
+let times = [];
 
 // ---- Clock drawing ----
 function drawClock(canvas, hour, minute, opts = {}) {
@@ -454,11 +457,23 @@ function drawClock(canvas, hour, minute, opts = {}) {
   }
 }
 
+function startTimer() {
+  startTime = performance.now();
+  const el = document.getElementById('timer');
+  timerInterval = setInterval(() => {
+    el.textContent = ((performance.now() - startTime) / 1000).toFixed(1) + 's';
+  }, 100);
+}
+
+function stopTimer() {
+  clearInterval(timerInterval);
+  return (performance.now() - startTime) / 1000;
+}
+
 function redraw() {
   const canvas = document.getElementById('quiz-clock');
   const style = phase === 1 ? 'full' : phase === 2 ? 'anchors' : 'none';
   drawClock(canvas, userHour, userMinute, {numberStyle: style, showSelected: !answered});
-  document.getElementById('your-time').textContent = formatTime(userHour === 0 ? 12 : userHour, userMinute);
 }
 
 // ---- Interaction ----
@@ -544,6 +559,7 @@ function minuteDiff(a, b) {
 function submitAnswer() {
   if (answered) return;
   answered = true;
+  const elapsed = stopTimer();
 
   const hDiff = hourDiff(userHour, targetH);
   const mDiff = minuteDiff(userMinute, targetM);
@@ -574,14 +590,18 @@ function submitAnswer() {
     phase,
     round: round + 1,
     correct: result === 'perfect' ? 1 : 0,
-    response_time: 0,
+    response_time: parseFloat(elapsed.toFixed(2)),
     target_time: formatTime(targetH, targetM),
     user_answer: formatTime(userHour === 0 ? 12 : userHour, userMinute),
   });
 
+  times.push(elapsed);
+
   results.push(result);
   document.getElementById('perfect-count').textContent = perfectCount;
   document.getElementById('close-count').textContent = closeCount;
+  const avg = times.reduce((a,b) => a+b, 0) / times.length;
+  document.getElementById('avg-time').textContent = avg.toFixed(1) + 's';
 
   // Show ghost hands for correct answer
   const c = document.getElementById('quiz-clock');
@@ -638,9 +658,11 @@ function nextRound() {
 
   updateDots();
   redraw();
+  startTimer();
 }
 
 function showSummary() {
+  const avg = times.reduce((a,b) => a+b, 0) / times.length;
   const pct = Math.round(perfectCount / TOTAL * 100);
   const passed = (perfectCount + closeCount) >= 8;
 
@@ -663,7 +685,7 @@ function showSummary() {
   summary.innerHTML = `
     <div class="summary-box">
       <div class="big-num">${perfectCount}/${TOTAL}</div>
-      <p>perfect &nbsp;|&nbsp; ${closeCount} close &nbsp;|&nbsp; ${TOTAL - perfectCount - closeCount} off</p>
+      <p>perfect &nbsp;|&nbsp; ${closeCount} close &nbsp;|&nbsp; ${TOTAL - perfectCount - closeCount} off &nbsp;|&nbsp; Avg: ${avg.toFixed(1)}s</p>
       <p style="margin-top:1rem; color: var(--muted)">${message}</p>
       ${unlockMsg}
       <button class="next-btn" onclick="resetQuiz()" style="margin-top:1rem">Try Again</button>
@@ -689,8 +711,10 @@ function resetQuiz() {
   perfectCount = 0;
   closeCount = 0;
   results = [];
+  times = [];
   document.getElementById('perfect-count').textContent = '0';
   document.getElementById('close-count').textContent = '0';
+  document.getElementById('avg-time').textContent = '—';
   nextRound();
 }
 
