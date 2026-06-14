@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 1: The Four Anchors</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --surface: #16213e;
+    --accent: #e94560;
+    --accent2: #0f3460;
+    --text: #eee;
+    --muted: #888;
+    --success: #4ade80;
+    --error: #f87171;
+    --gold: #fbbf24;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Georgia', serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+  h1 {
+    font-size: 2rem;
+    margin-bottom: 0.25rem;
+    color: var(--gold);
+  }
+  .subtitle {
+    color: var(--muted);
+    font-style: italic;
+    margin-bottom: 2rem;
+  }
+  h2 {
+    font-size: 1.4rem;
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    color: var(--gold);
+    border-bottom: 1px solid var(--accent2);
+    padding-bottom: 0.5rem;
+  }
+  p { margin-bottom: 1rem; }
+  .key-insight {
+    background: var(--accent2);
+    border-left: 4px solid var(--accent);
+    padding: 1rem 1.25rem;
+    margin: 1.5rem 0;
+    border-radius: 0 8px 8px 0;
+  }
+  .key-insight strong { color: var(--gold); }
+
+  /* Clock styles */
+  .clock-demo {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin: 2rem 0;
+  }
+  .clock-wrapper {
+    text-align: center;
+  }
+  .clock-label {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 0.5rem;
+  }
+  canvas.clock {
+    border-radius: 50%;
+    background: var(--surface);
+  }
+
+  /* Quiz section */
+  .quiz-area {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 2rem;
+    margin: 2rem 0;
+    text-align: center;
+  }
+  .quiz-area canvas {
+    margin-bottom: 1.5rem;
+  }
+  .options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    max-width: 400px;
+    margin: 0 auto 1rem;
+  }
+  .option-btn {
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--accent2);
+    background: transparent;
+    color: var(--text);
+    font-size: 1.1rem;
+    font-family: inherit;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .option-btn:hover { border-color: var(--accent); background: rgba(233,69,96,0.1); }
+  .option-btn.correct { border-color: var(--success); background: rgba(74,222,128,0.15); }
+  .option-btn.wrong { border-color: var(--error); background: rgba(248,113,113,0.15); }
+  .option-btn:disabled { cursor: default; opacity: 0.6; }
+
+  .feedback {
+    font-size: 1.1rem;
+    min-height: 2rem;
+    margin: 0.5rem 0;
+  }
+  .feedback.correct { color: var(--success); }
+  .feedback.wrong { color: var(--error); }
+
+  .score-bar {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+  .score-bar span { color: var(--gold); }
+
+  .next-btn {
+    padding: 0.6rem 2rem;
+    border: none;
+    background: var(--accent);
+    color: white;
+    font-size: 1rem;
+    font-family: inherit;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 0.5rem;
+  }
+  .next-btn:hover { opacity: 0.9; }
+
+  .timer {
+    font-size: 1.5rem;
+    color: var(--gold);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Drill section */
+  .drill-controls {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .drill-btn {
+    padding: 0.6rem 1.5rem;
+    border: 2px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+    font-size: 1rem;
+    font-family: inherit;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .drill-btn:hover, .drill-btn.active {
+    background: var(--accent);
+    color: white;
+  }
+
+  .progress-dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin: 1rem 0;
+  }
+  .dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--accent2);
+  }
+  .dot.correct { background: var(--success); }
+  .dot.wrong { background: var(--error); }
+  .dot.current { background: var(--gold); }
+
+  .summary-box {
+    background: var(--accent2);
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    margin: 1rem 0;
+  }
+  .summary-box .big-num {
+    font-size: 3rem;
+    color: var(--gold);
+    font-weight: bold;
+  }
+
+  a { color: var(--accent); }
+  .nav-links {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--accent2);
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+  .cite {
+    font-size: 0.8rem;
+    color: var(--muted);
+    vertical-align: super;
+  }
+
+  @media print {
+    body { background: white; color: #222; }
+    .quiz-area, .drill-controls, .next-btn { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Lesson 1: The Four Anchors</h1>
+<p class="subtitle">Stop counting. Start seeing.</p>
+
+<p>
+  Right now, when you look at your watch, your brain tries to <em>calculate</em> the time — counting tick marks, figuring out which hour it is. That's slow. People who read analog watches instantly don't calculate. They <strong>recognize</strong>.
+</p>
+<p>
+  This lesson teaches you the single most important foundation: the four anchor points that turn a blank dial into a map you can read at a glance.
+</p>
+
+<h2>The Four Anchors</h2>
+
+<p>
+  Every watch dial — even one with zero markings — has four positions burned into its geometry. You already know them, you just haven't made them automatic yet:
+</p>
+
+<div class="key-insight">
+  <strong>Top = 12</strong> &nbsp;|&nbsp; <strong>Right = 3</strong> &nbsp;|&nbsp; <strong>Bottom = 6</strong> &nbsp;|&nbsp; <strong>Left = 9</strong>
+</div>
+
+<p>
+  These four positions divide the dial into quadrants. When the minute hand points to any of these, you instantly know the minutes: <strong>:00, :15, :30, :45</strong>. That's your grid.
+</p>
+
+<div class="clock-demo" id="anchor-demo"></div>
+
+<p>
+  Notice how the minute hand at each anchor creates a distinct <em>shape</em> — straight up, pointing right, straight down, pointing left. These aren't positions to memorize. They're shapes to <em>see</em>.<sup class="cite"><a href="https://www.analog-clock.org/blog/how-to-read-analog-clock-faster" target="_blank">1</a></sup>
+</p>
+
+<h2>Reading by Quadrant</h2>
+
+<p>
+  Once the anchors are automatic, every other time becomes "near an anchor." The minute hand is always in one of four quadrants:
+</p>
+
+<div class="key-insight">
+  <strong>Top-right quadrant</strong> → minutes are between :00 and :15<br>
+  <strong>Bottom-right quadrant</strong> → minutes are between :15 and :30<br>
+  <strong>Bottom-left quadrant</strong> → minutes are between :30 and :45<br>
+  <strong>Top-left quadrant</strong> → minutes are between :45 and :00
+</div>
+
+<p>
+  You don't need to know if it's :07 or :08. Knowing "it's a bit past the hour" or "it's about quarter past" is how fluent analog readers actually think. Precision comes later — and often, you don't even need it.<sup class="cite"><a href="https://forums.macrumors.com/threads/learning-to-tell-the-time-using-an-analog-face-with-no-numbers-or-markers.2431362/" target="_blank">2</a></sup>
+</p>
+
+<h2>The Hour Hand Trick</h2>
+
+<p>
+  The hour hand is the one people misread most often, especially on numberless dials.<sup class="cite"><a href="https://www.watchuseek.com/threads/cant-read-an-analog-watch-at-a-glance-is-this-normal.4691651/" target="_blank">3</a></sup> Here's the trick: <strong>use the same four anchors</strong>.
+</p>
+<p>
+  The hour hand is shorter and fatter. When it's pointing roughly at an anchor, you know exactly what hour it is. When it's <em>between</em> anchors, you're between those hours. The quadrant the hour hand sits in tells you the rough hour range:
+</p>
+
+<div class="key-insight">
+  <strong>Top-right</strong> → 12, 1, or 2<br>
+  <strong>Bottom-right</strong> → 3, 4, or 5<br>
+  <strong>Bottom-left</strong> → 6, 7, or 8<br>
+  <strong>Top-left</strong> → 9, 10, or 11
+</div>
+
+<p>
+  Within each quadrant, there are only three possible hours. Your brain narrows to three choices instantly, then the exact position within that zone picks the right one.
+</p>
+
+<h2>Practice: Anchor Recognition</h2>
+<p>
+  Let's drill this. You'll see a watch face — pick the correct time. Start by focusing on the anchors and quadrants, not counting.
+</p>
+
+<div class="quiz-area" id="quiz-area">
+  <div class="drill-controls">
+    <button class="drill-btn active" onclick="setMode('quarter')">Quarter Hours</button>
+    <button class="drill-btn" onclick="setMode('fivemin')">5-Minute Steps</button>
+  </div>
+  <canvas id="quiz-clock" class="clock" width="220" height="220"></canvas>
+  <div class="timer" id="timer">0.0s</div>
+  <div class="options" id="options"></div>
+  <div class="feedback" id="feedback">&nbsp;</div>
+  <div class="progress-dots" id="dots"></div>
+  <div class="score-bar">
+    Round: <span id="round">1</span>/10 &nbsp;&nbsp; Correct: <span id="correct-count">0</span> &nbsp;&nbsp; Avg time: <span id="avg-time">—</span>
+  </div>
+  <div id="summary" style="display:none"></div>
+</div>
+
+<h2>What's Next</h2>
+<p>
+  Once the four anchors feel automatic — you see :00, :15, :30, :45 without thinking — the next lesson will teach you to read the spaces <em>between</em> anchors: the 5-minute positions (the "in-between twelve").
+</p>
+<p>
+  <strong>Between now and then:</strong> every time you check your watch, consciously identify which quadrant each hand is in before trying to read the exact time. This real-world practice is the fastest way to build the skill.<sup class="cite"><a href="https://forums.macrumors.com/threads/learning-to-tell-the-time-using-an-analog-face-with-no-numbers-or-markers.2431362/" target="_blank">2</a></sup>
+</p>
+<p>
+  Have questions? Ask your teaching agent — that's what it's here for.
+</p>
+
+<div class="nav-links">
+  <strong>References:</strong>
+  <a href="../reference/four-anchors-cheatsheet.html">Four Anchors Cheatsheet</a>
+  <br><br>
+  <strong>Sources:</strong><br>
+  <sup>1</sup> <a href="https://www.analog-clock.org/blog/how-to-read-analog-clock-faster" target="_blank">How to Read an Analog Clock Faster — analog-clock.org</a><br>
+  <sup>2</sup> <a href="https://forums.macrumors.com/threads/learning-to-tell-the-time-using-an-analog-face-with-no-numbers-or-markers.2431362/" target="_blank">MacRumors — Learning to tell time with no markers</a><br>
+  <sup>3</sup> <a href="https://www.watchuseek.com/threads/cant-read-an-analog-watch-at-a-glance-is-this-normal.4691651/" target="_blank">WatchUSeek — Can't read an analog watch at a glance</a>
+</div>
+
+</div>
+
+<script>
+// ---- Clock drawing ----
+function drawClock(canvas, hour, minute, opts = {}) {
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  const cx = w/2, cy = h/2, r = Math.min(w,h)/2 - 8;
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Dial
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI*2);
+  ctx.fillStyle = '#0a0a1a';
+  ctx.fill();
+  ctx.strokeStyle = '#333';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Tick marks (indices only, no numbers)
+  for (let i = 0; i < 12; i++) {
+    const angle = (i * 30 - 90) * Math.PI / 180;
+    const isAnchor = i % 3 === 0;
+    const outerR = r - 4;
+    const innerR = isAnchor ? r - 18 : r - 10;
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(angle) * innerR, cy + Math.sin(angle) * innerR);
+    ctx.lineTo(cx + Math.cos(angle) * outerR, cy + Math.sin(angle) * outerR);
+    ctx.strokeStyle = isAnchor ? (opts.highlightAnchors ? '#fbbf24' : '#aaa') : '#555';
+    ctx.lineWidth = isAnchor ? 3 : 1.5;
+    ctx.stroke();
+  }
+
+  // Anchor labels
+  if (opts.showAnchorLabels) {
+    ctx.font = '13px Georgia';
+    ctx.fillStyle = '#fbbf24';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const labels = [{h:12, x:cx, y:cy-r+30}, {h:3, x:cx+r-30, y:cy}, {h:6, x:cx, y:cy+r-30}, {h:9, x:cx-r+30, y:cy}];
+    labels.forEach(l => ctx.fillText(l.h, l.x, l.y));
+  }
+
+  // Hour hand
+  const hourAngle = ((hour % 12) * 30 + minute * 0.5 - 90) * Math.PI / 180;
+  const hourLen = r * 0.5;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(cx + Math.cos(hourAngle) * hourLen, cy + Math.sin(hourAngle) * hourLen);
+  ctx.strokeStyle = '#eee';
+  ctx.lineWidth = 5;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  // Minute hand
+  const minAngle = (minute * 6 - 90) * Math.PI / 180;
+  const minLen = r * 0.75;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(cx + Math.cos(minAngle) * minLen, cy + Math.sin(minAngle) * minLen);
+  ctx.strokeStyle = '#eee';
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  // Center dot
+  ctx.beginPath();
+  ctx.arc(cx, cy, 4, 0, Math.PI*2);
+  ctx.fillStyle = '#e94560';
+  ctx.fill();
+}
+
+// ---- Anchor demos ----
+(function() {
+  const demo = document.getElementById('anchor-demo');
+  const times = [
+    {h:10, m:0,  label:':00 — Top'},
+    {h:10, m:15, label:':15 — Right'},
+    {h:10, m:30, label:':30 — Bottom'},
+    {h:10, m:45, label:':45 — Left'},
+  ];
+  times.forEach(t => {
+    const wrap = document.createElement('div');
+    wrap.className = 'clock-wrapper';
+    const c = document.createElement('canvas');
+    c.className = 'clock';
+    c.width = 140; c.height = 140;
+    wrap.appendChild(c);
+    const lbl = document.createElement('div');
+    lbl.className = 'clock-label';
+    lbl.textContent = t.label;
+    wrap.appendChild(lbl);
+    demo.appendChild(wrap);
+    drawClock(c, t.h, t.m, {highlightAnchors: true, showAnchorLabels: true});
+  });
+})();
+
+// ---- Tracking ----
+let sessionId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+function saveResult(data) {
+  fetch('/api/results', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({lesson: '0001-four-anchors', session_id: sessionId, ...data}),
+  }).catch(() => {});
+}
+
+// ---- Quiz engine ----
+let mode = 'quarter';
+let currentTime = null;
+let startTime = null;
+let timerInterval = null;
+let round = 0;
+let correctCount = 0;
+let times = [];
+let results = [];
+const TOTAL = 10;
+
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll('.drill-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.drill-btn[onclick="setMode('${m}')"]`).classList.add('active');
+  resetQuiz();
+}
+
+function genTime() {
+  const h = Math.floor(Math.random() * 12) + 1;
+  let m;
+  if (mode === 'quarter') {
+    m = [0, 15, 30, 45][Math.floor(Math.random() * 4)];
+  } else {
+    m = Math.floor(Math.random() * 12) * 5;
+  }
+  return {h, m};
+}
+
+function formatTime(h, m) {
+  return h + ':' + String(m).padStart(2, '0');
+}
+
+function genOptions(correct) {
+  const opts = new Set();
+  opts.add(formatTime(correct.h, correct.m));
+  while (opts.size < 4) {
+    const t = genTime();
+    opts.add(formatTime(t.h, t.m));
+  }
+  return shuffle([...opts]);
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function startTimer() {
+  startTime = performance.now();
+  const el = document.getElementById('timer');
+  timerInterval = setInterval(() => {
+    el.textContent = ((performance.now() - startTime) / 1000).toFixed(1) + 's';
+  }, 100);
+}
+
+function stopTimer() {
+  clearInterval(timerInterval);
+  return (performance.now() - startTime) / 1000;
+}
+
+function updateDots() {
+  const container = document.getElementById('dots');
+  container.innerHTML = '';
+  for (let i = 0; i < TOTAL; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    if (i < results.length) dot.classList.add(results[i] ? 'correct' : 'wrong');
+    else if (i === round) dot.classList.add('current');
+    container.appendChild(dot);
+  }
+}
+
+function showRound() {
+  if (round >= TOTAL) return showSummary();
+
+  document.getElementById('summary').style.display = 'none';
+  const time = genTime();
+  currentTime = time;
+  const canvas = document.getElementById('quiz-clock');
+  drawClock(canvas, time.h, time.m, {highlightAnchors: false});
+
+  const opts = genOptions(time);
+  const container = document.getElementById('options');
+  container.innerHTML = '';
+  opts.forEach(o => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.textContent = o;
+    btn.onclick = () => handleAnswer(o, btn);
+    container.appendChild(btn);
+  });
+
+  document.getElementById('feedback').innerHTML = '&nbsp;';
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('round').textContent = round + 1;
+  updateDots();
+  startTimer();
+}
+
+function handleAnswer(answer, btn) {
+  const elapsed = stopTimer();
+  const correctAnswer = formatTime(currentTime.h, currentTime.m);
+  const isCorrect = answer === correctAnswer;
+
+  document.querySelectorAll('.option-btn').forEach(b => {
+    b.disabled = true;
+    if (b.textContent === correctAnswer) b.classList.add('correct');
+  });
+  if (!isCorrect) btn.classList.add('wrong');
+
+  const fb = document.getElementById('feedback');
+  if (isCorrect) {
+    correctCount++;
+    fb.textContent = `Correct! ${elapsed.toFixed(1)}s`;
+    fb.className = 'feedback correct';
+  } else {
+    fb.textContent = `It was ${correctAnswer}. ${elapsed.toFixed(1)}s`;
+    fb.className = 'feedback wrong';
+  }
+
+  saveResult({
+    phase: mode === 'quarter' ? 1 : 2,
+    round: round + 1,
+    correct: isCorrect ? 1 : 0,
+    response_time: parseFloat(elapsed.toFixed(2)),
+    target_time: correctAnswer,
+    user_answer: answer,
+  });
+
+  results.push(isCorrect);
+  times.push(elapsed);
+  document.getElementById('correct-count').textContent = correctCount;
+  const avg = times.reduce((a,b) => a+b, 0) / times.length;
+  document.getElementById('avg-time').textContent = avg.toFixed(1) + 's';
+  updateDots();
+
+  round++;
+  setTimeout(showRound, 1200);
+}
+
+function showSummary() {
+  const avg = times.reduce((a,b) => a+b, 0) / times.length;
+  const pct = Math.round(correctCount / TOTAL * 100);
+  const summary = document.getElementById('summary');
+  let message = '';
+  if (pct === 100 && avg < 2) message = 'Outstanding. The anchors are becoming automatic.';
+  else if (pct >= 80) message = 'Solid. Keep practicing — speed will come with repetition.';
+  else message = 'The anchors need more time to sink in. Try the quarter-hours mode again.';
+
+  summary.innerHTML = `
+    <div class="summary-box">
+      <div class="big-num">${pct}%</div>
+      <p>${correctCount}/${TOTAL} correct &nbsp;|&nbsp; Average: ${avg.toFixed(1)}s</p>
+      <p style="margin-top:1rem; color: var(--muted)">${message}</p>
+      <button class="next-btn" onclick="resetQuiz()" style="margin-top:1rem">Try Again</button>
+    </div>
+  `;
+  summary.style.display = 'block';
+  document.getElementById('options').innerHTML = '';
+  document.getElementById('feedback').innerHTML = '&nbsp;';
+}
+
+function resetQuiz() {
+  sessionId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  round = 0;
+  correctCount = 0;
+  times = [];
+  results = [];
+  document.getElementById('correct-count').textContent = '0';
+  document.getElementById('avg-time').textContent = '—';
+  showRound();
+}
+
+resetQuiz();
+</script>
+</body>
+</html>

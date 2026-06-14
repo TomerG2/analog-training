@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Progress Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --surface: #16213e;
+    --accent: #e94560;
+    --accent2: #0f3460;
+    --text: #eee;
+    --muted: #888;
+    --success: #4ade80;
+    --error: #f87171;
+    --gold: #fbbf24;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Georgia', serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+  h1 { font-size: 2rem; color: var(--gold); margin-bottom: 0.25rem; }
+  .subtitle { color: var(--muted); font-style: italic; margin-bottom: 2rem; }
+  h2 {
+    font-size: 1.3rem;
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    color: var(--gold);
+    border-bottom: 1px solid var(--accent2);
+    padding-bottom: 0.5rem;
+  }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+  .stat-card {
+    background: var(--surface);
+    border-radius: 10px;
+    padding: 1.25rem;
+    text-align: center;
+  }
+  .stat-card .num {
+    font-size: 2.2rem;
+    font-weight: bold;
+    color: var(--gold);
+  }
+  .stat-card .label {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 0.25rem;
+  }
+
+  .chart-box {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+  }
+  .chart-box canvas {
+    max-height: 300px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+  }
+  th, td {
+    padding: 0.6rem 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--accent2);
+    font-size: 0.9rem;
+  }
+  th {
+    color: var(--gold);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .good { color: var(--success); }
+  .ok { color: var(--gold); }
+  .bad { color: var(--error); }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  .lesson-link { color: var(--accent); text-decoration: none; }
+  .lesson-link:hover { text-decoration: underline; }
+
+  .nav-links {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--accent2);
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+  a { color: var(--accent); }
+
+  .refresh-btn {
+    float: right;
+    padding: 0.4rem 1rem;
+    border: 1px solid var(--accent2);
+    background: transparent;
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 0.85rem;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .refresh-btn:hover { border-color: var(--accent); color: var(--text); }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Progress Dashboard <button class="refresh-btn" onclick="loadAll()">Refresh</button></h1>
+<p class="subtitle">Tracking your analog watch reading skills</p>
+
+<div class="stats-row" id="stats-row">
+  <div class="stat-card"><div class="num" id="total-sessions">—</div><div class="label">Sessions</div></div>
+  <div class="stat-card"><div class="num" id="total-rounds">—</div><div class="label">Total Rounds</div></div>
+  <div class="stat-card"><div class="num" id="overall-accuracy">—</div><div class="label">Accuracy</div></div>
+  <div class="stat-card"><div class="num" id="avg-speed">—</div><div class="label">Avg Speed</div></div>
+</div>
+
+<h2>Accuracy Over Time</h2>
+<div class="chart-box"><canvas id="accuracy-chart"></canvas></div>
+
+<h2>Response Time Over Time</h2>
+<div class="chart-box"><canvas id="speed-chart"></canvas></div>
+
+<h2>Accuracy by Lesson &amp; Phase</h2>
+<div class="chart-box"><canvas id="breakdown-chart"></canvas></div>
+
+<h2>Session History</h2>
+<div id="session-table-area"></div>
+
+<div class="nav-links">
+  <strong>Lessons:</strong>
+  <a href="lessons/0002-numbered-anchors.html">Lesson 2: Anchors with Numbers</a> |
+  <a href="lessons/0003-set-the-clock.html">Lesson 3: Set the Clock</a> |
+  <a href="lessons/0001-four-anchors.html">Lesson 1: Four Anchors</a>
+</div>
+
+</div>
+
+<script>
+const LESSON_COLORS = {
+  '0001-four-anchors': {line: '#e94560', bg: 'rgba(233,69,96,0.2)'},
+  '0002-numbered-anchors': {line: '#fbbf24', bg: 'rgba(251,191,36,0.2)'},
+  '0003-set-the-clock': {line: '#60a5fa', bg: 'rgba(96,165,250,0.2)'},
+};
+const LESSON_NAMES = {
+  '0001-four-anchors': 'L1: Four Anchors',
+  '0002-numbered-anchors': 'L2: Numbered',
+  '0003-set-the-clock': 'L3: Set the Clock',
+};
+
+const chartDefaults = {
+  responsive: true,
+  maintainAspectRatio: true,
+  plugins: {
+    legend: {labels: {color: '#eee', font: {family: 'Georgia'}}},
+  },
+  scales: {
+    x: {ticks: {color: '#888', font: {family: 'Georgia'}}, grid: {color: 'rgba(255,255,255,0.05)'}},
+    y: {ticks: {color: '#888', font: {family: 'Georgia'}}, grid: {color: 'rgba(255,255,255,0.08)'}},
+  },
+};
+
+let accuracyChart, speedChart, breakdownChart;
+
+function initCharts() {
+  const accCtx = document.getElementById('accuracy-chart').getContext('2d');
+  accuracyChart = new Chart(accCtx, {
+    type: 'line',
+    data: {labels: [], datasets: []},
+    options: {
+      ...chartDefaults,
+      scales: {
+        ...chartDefaults.scales,
+        y: {...chartDefaults.scales.y, min: 0, max: 100, ticks: {...chartDefaults.scales.y.ticks, callback: v => v + '%'}},
+      },
+    },
+  });
+
+  const spdCtx = document.getElementById('speed-chart').getContext('2d');
+  speedChart = new Chart(spdCtx, {
+    type: 'line',
+    data: {labels: [], datasets: []},
+    options: {
+      ...chartDefaults,
+      scales: {
+        ...chartDefaults.scales,
+        y: {...chartDefaults.scales.y, min: 0, ticks: {...chartDefaults.scales.y.ticks, callback: v => v + 's'}},
+      },
+    },
+  });
+
+  const brkCtx = document.getElementById('breakdown-chart').getContext('2d');
+  breakdownChart = new Chart(brkCtx, {
+    type: 'bar',
+    data: {labels: [], datasets: []},
+    options: {
+      ...chartDefaults,
+      scales: {
+        ...chartDefaults.scales,
+        y: {...chartDefaults.scales.y, min: 0, max: 100, ticks: {...chartDefaults.scales.y.ticks, callback: v => v + '%'}},
+      },
+    },
+  });
+}
+
+async function loadAll() {
+  try {
+    const [results, sessions] = await Promise.all([
+      fetch('/api/results').then(r => r.json()),
+      fetch('/api/sessions').then(r => r.json()),
+    ]);
+
+    if (!results.length) {
+      document.getElementById('session-table-area').innerHTML = '<div class="empty-state">No data yet. Complete some lesson rounds and come back!</div>';
+      return;
+    }
+
+    updateStats(results, sessions);
+    updateAccuracyChart(sessions);
+    updateSpeedChart(sessions);
+    updateBreakdownChart(results);
+    updateSessionTable(sessions);
+  } catch (e) {
+    document.getElementById('session-table-area').innerHTML = `<div class="empty-state">Could not load data. Is the server running?<br><code style="color:var(--error)">${e.message}</code></div>`;
+  }
+}
+
+function updateStats(results, sessions) {
+  document.getElementById('total-sessions').textContent = sessions.length;
+  document.getElementById('total-rounds').textContent = results.length;
+
+  const totalCorrect = results.filter(r => r.correct).length;
+  const pct = Math.round(100 * totalCorrect / results.length);
+  document.getElementById('overall-accuracy').textContent = pct + '%';
+
+  const avgTime = results.reduce((s, r) => s + r.response_time, 0) / results.length;
+  document.getElementById('avg-speed').textContent = avgTime.toFixed(1) + 's';
+}
+
+function updateAccuracyChart(sessions) {
+  const byLesson = {};
+  sessions.slice().reverse().forEach((s, i) => {
+    const key = s.lesson;
+    if (!byLesson[key]) byLesson[key] = {labels: [], data: []};
+    byLesson[key].labels.push('#' + (i + 1));
+    byLesson[key].data.push(s.accuracy_pct);
+  });
+
+  const datasets = Object.entries(byLesson).map(([lesson, d]) => ({
+    label: LESSON_NAMES[lesson] || lesson,
+    data: d.data,
+    borderColor: (LESSON_COLORS[lesson] || {line: '#999'}).line,
+    backgroundColor: (LESSON_COLORS[lesson] || {bg: 'rgba(150,150,150,0.2)'}).bg,
+    tension: 0.3,
+    fill: false,
+    pointRadius: 4,
+  }));
+
+  const maxLen = Math.max(...Object.values(byLesson).map(d => d.labels.length));
+  const labels = Array.from({length: maxLen}, (_, i) => '#' + (i + 1));
+
+  accuracyChart.data = {labels, datasets};
+  accuracyChart.update();
+}
+
+function updateSpeedChart(sessions) {
+  const byLesson = {};
+  sessions.slice().reverse().forEach((s, i) => {
+    const key = s.lesson;
+    if (!byLesson[key]) byLesson[key] = {labels: [], data: []};
+    byLesson[key].labels.push('#' + (i + 1));
+    byLesson[key].data.push(s.avg_response_time);
+  });
+
+  const datasets = Object.entries(byLesson).map(([lesson, d]) => ({
+    label: LESSON_NAMES[lesson] || lesson,
+    data: d.data,
+    borderColor: (LESSON_COLORS[lesson] || {line: '#999'}).line,
+    backgroundColor: (LESSON_COLORS[lesson] || {bg: 'rgba(150,150,150,0.2)'}).bg,
+    tension: 0.3,
+    fill: false,
+    pointRadius: 4,
+  }));
+
+  const maxLen = Math.max(...Object.values(byLesson).map(d => d.labels.length));
+  const labels = Array.from({length: maxLen}, (_, i) => '#' + (i + 1));
+
+  speedChart.data = {labels, datasets};
+  speedChart.update();
+}
+
+function updateBreakdownChart(results) {
+  const groups = {};
+  results.forEach(r => {
+    const key = `${LESSON_NAMES[r.lesson] || r.lesson} P${r.phase}`;
+    if (!groups[key]) groups[key] = {correct: 0, total: 0, lesson: r.lesson};
+    groups[key].total++;
+    if (r.correct) groups[key].correct++;
+  });
+
+  const labels = Object.keys(groups);
+  const data = labels.map(k => Math.round(100 * groups[k].correct / groups[k].total));
+  const colors = labels.map(k => (LESSON_COLORS[groups[k].lesson] || {line: '#999'}).line);
+
+  breakdownChart.data = {
+    labels,
+    datasets: [{
+      label: 'Accuracy %',
+      data,
+      backgroundColor: colors.map(c => c.replace(')', ', 0.6)').replace('rgb', 'rgba')),
+      borderColor: colors,
+      borderWidth: 1,
+    }],
+  };
+  breakdownChart.update();
+}
+
+function updateSessionTable(sessions) {
+  if (!sessions.length) {
+    document.getElementById('session-table-area').innerHTML = '<div class="empty-state">No sessions yet.</div>';
+    return;
+  }
+
+  const rows = sessions.slice(0, 30).map(s => {
+    const accClass = s.accuracy_pct >= 80 ? 'good' : s.accuracy_pct >= 50 ? 'ok' : 'bad';
+    const spdClass = s.avg_response_time <= 2 ? 'good' : s.avg_response_time <= 4 ? 'ok' : 'bad';
+    const date = s.started_at ? s.started_at.replace('T', ' ').slice(0, 16) : '—';
+    return `<tr>
+      <td>${date}</td>
+      <td>${LESSON_NAMES[s.lesson] || s.lesson}</td>
+      <td>Phase ${s.phase}</td>
+      <td class="${accClass}">${s.accuracy_pct}%</td>
+      <td>${s.correct_count}/${s.rounds}</td>
+      <td class="${spdClass}">${s.avg_response_time}s</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('session-table-area').innerHTML = `
+    <table>
+      <thead><tr><th>Date</th><th>Lesson</th><th>Phase</th><th>Accuracy</th><th>Score</th><th>Avg Time</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+initCharts();
+loadAll();
+</script>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reference: Four Anchors Cheatsheet</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --surface: #16213e;
+    --accent: #e94560;
+    --accent2: #0f3460;
+    --text: #eee;
+    --muted: #888;
+    --gold: #fbbf24;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Georgia', serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+  }
+  .container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+  }
+  h1 { font-size: 1.6rem; color: var(--gold); margin-bottom: 1.5rem; }
+  h2 { font-size: 1.1rem; color: var(--gold); margin-top: 2rem; margin-bottom: 0.75rem; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+  }
+  th, td {
+    padding: 0.6rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--accent2);
+  }
+  th { color: var(--gold); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  .pos { font-weight: bold; color: var(--accent); }
+  .rule {
+    background: var(--accent2);
+    border-left: 4px solid var(--accent);
+    padding: 0.75rem 1rem;
+    margin: 1rem 0;
+    border-radius: 0 6px 6px 0;
+  }
+  .nav { margin-top: 2rem; font-size: 0.9rem; color: var(--muted); }
+  a { color: var(--accent); }
+
+  @media print {
+    body { background: white; color: #222; }
+    .pos { color: #c00; }
+    th { color: #555; }
+    .rule { background: #f5f5f5; border-left-color: #c00; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Four Anchors Cheatsheet</h1>
+
+<h2>Minute Hand Anchors</h2>
+<table>
+  <tr><th>Position</th><th>Minutes</th><th>Shape cue</th></tr>
+  <tr><td class="pos">Top (12)</td><td>:00</td><td>Hand points straight up</td></tr>
+  <tr><td class="pos">Right (3)</td><td>:15</td><td>Hand points right</td></tr>
+  <tr><td class="pos">Bottom (6)</td><td>:30</td><td>Hand points straight down</td></tr>
+  <tr><td class="pos">Left (9)</td><td>:45</td><td>Hand points left</td></tr>
+</table>
+
+<h2>Hour Hand Quadrants</h2>
+<table>
+  <tr><th>Quadrant</th><th>Hours</th></tr>
+  <tr><td class="pos">Top-right</td><td>12, 1, 2</td></tr>
+  <tr><td class="pos">Bottom-right</td><td>3, 4, 5</td></tr>
+  <tr><td class="pos">Bottom-left</td><td>6, 7, 8</td></tr>
+  <tr><td class="pos">Top-left</td><td>9, 10, 11</td></tr>
+</table>
+
+<h2>Reading Algorithm</h2>
+<div class="rule">
+  1. <strong>Hour hand quadrant</strong> → narrows to 3 possible hours<br>
+  2. <strong>Hour hand position within quadrant</strong> → picks the exact hour<br>
+  3. <strong>Minute hand quadrant</strong> → gives you the quarter<br>
+  4. <strong>Minute hand position within quadrant</strong> → refines to ~5 min
+</div>
+
+<h2>Key Rule</h2>
+<div class="rule">
+  <strong>Don't count tick marks.</strong> Identify the nearest anchor, then estimate the offset. "A bit past :30" is faster and good enough.
+</div>
+
+<div class="nav">
+  <a href="../lessons/0001-four-anchors.html">Back to Lesson 1</a>
+</div>
+
+</div>
+</body>
+</html>
